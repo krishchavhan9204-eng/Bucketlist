@@ -9,12 +9,11 @@ import type {
 import MemoryGraph from "./components/MemoryGraph";
 import "./App.css";
 
-// ⏱️ POLISHED DUAL-FORMAT DATE COMPILER
+// ⏱️ STABLE DUAL-FORMAT DATE PARSER
 function standardizeDate(rawDate: any): string {
   if (!rawDate) return "Unknown";
-  const cleanStr = rawDate.toString().trim().split(" ")[0]; // Remove time stamp string
+  const cleanStr = rawDate.toString().trim().split(" ")[0];
 
-  // Handle DD/MM/YYYY format (Household CSV)
   if (cleanStr.includes("/")) {
     const parts = cleanStr.split("/");
     if (parts.length === 3) {
@@ -24,8 +23,26 @@ function standardizeDate(rawDate: any): string {
       return `${y}-${m}-${d}`;
     }
   }
-  // Handle YYYY-MM-DD format (Spotify CSV)
   return cleanStr;
+}
+
+// 🧮 FAIL-SAFE STRING-TO-NUMBER CONVERTER
+function cleanNumericValue(val: any): number {
+  if (val === undefined || val === null) return 0;
+  const cleanStr = val.toString().replace(/[^\d.-]/g, "");
+  const parsed = parseFloat(cleanStr);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+// 🔤 DEEP TEXT SANITIZER FOR SPOTIFY KEY LOOKUPS
+function sanitizeTrackKey(name: any): string {
+  if (!name) return "";
+  return name
+    .toString()
+    .toLowerCase()
+    .replace(/["']/g, "") // Remove double and single quotation marks completely
+    .replace(/[^\w\s]/gi, "") // Strip out brackets, hyphens, and punctuation symbols
+    .trim();
 }
 
 export default function App() {
@@ -38,7 +55,7 @@ export default function App() {
   const [activeDateFilter, setActiveDateFilter] = useState<string | null>(null);
 
   useEffect(() => {
-    async function compileCSVStreams() {
+    async function loadAllCSVLogs() {
       try {
         const [transRes, historyRes, dictRes] = await Promise.all([
           fetchCSV<HouseholdTransaction>("/data/household_transactions.csv"),
@@ -50,10 +67,11 @@ export default function App() {
         if (dictRes && Array.isArray(dictRes)) {
           dictRes.forEach((row) => {
             if (row.trackName) {
-              lookupMap[row.trackName.toString().trim()] = {
-                energy: row.energy || 0,
-                tempo: row.tempo || 0,
-                valence: row.valence || 0,
+              const cleanKey = sanitizeTrackKey(row.trackName);
+              lookupMap[cleanKey] = {
+                energy: cleanNumericValue(row.energy),
+                tempo: cleanNumericValue(row.tempo),
+                valence: cleanNumericValue(row.valence),
               };
             }
           });
@@ -63,12 +81,12 @@ export default function App() {
         setSpotifyHistory(historyRes || []);
         setSpotifyDictMap(lookupMap);
       } catch (error) {
-        console.error("❌ Data stream loading fault:", error);
+        console.error("❌ Data pipeline indexing crashed:", error);
       } finally {
         setLoading(false);
       }
     }
-    compileCSVStreams();
+    loadAllCSVLogs();
   }, []);
 
   const dailyChronicles = useMemo((): DailyLifeSnapshot[] => {
@@ -95,7 +113,7 @@ export default function App() {
           tracksWithFeatures: 0,
         };
       }
-      timeline[dateKey].spent += Number(tx.Amount) || 0;
+      timeline[dateKey].spent += cleanNumericValue(tx.Amount);
       timeline[dateKey].txCount += 1;
     });
 
@@ -112,11 +130,12 @@ export default function App() {
         };
       }
 
-      timeline[dateKey].msListened += Number(track.ms_played) || 0;
+      timeline[dateKey].msListened += cleanNumericValue(track.ms_played);
 
-      const features = spotifyDictMap[track.track_name?.toString().trim()];
+      const trackNameKey = sanitizeTrackKey(track.track_name);
+      const features = spotifyDictMap[trackNameKey];
       if (features) {
-        timeline[dateKey].energySum += Number(features.energy) || 0;
+        timeline[dateKey].energySum += cleanNumericValue(features.energy);
         timeline[dateKey].tracksWithFeatures += 1;
       }
     });
@@ -136,7 +155,7 @@ export default function App() {
           averageValence: 0,
         };
       })
-      .sort((a, b) => b.date.localeCompare(a.date)); // View youngest historical logs first
+      .sort((a, b) => b.date.localeCompare(a.date));
   }, [transactions, spotifyHistory, spotifyDictMap]);
 
   const summaryMetrics = useMemo(() => {
@@ -164,6 +183,22 @@ export default function App() {
     };
   }, [activeDateFilter, transactions, spotifyHistory]);
 
+  const mappedTransactions = useMemo(() => {
+    return transactions.map((t) => ({
+      Date: standardizeDate(t.Date),
+      Amount: cleanNumericValue(t.Amount),
+      Category: t.Category,
+    }));
+  }, [transactions]);
+
+  const mappedSpotifyHistory = useMemo(() => {
+    return spotifyHistory.map((s) => ({
+      endTime: standardizeDate(s.ts),
+      trackName: s.track_name,
+      artistName: s.artist_name,
+    }));
+  }, [spotifyHistory]);
+
   if (loading)
     return (
       <div className="loading-fallback">
@@ -173,7 +208,6 @@ export default function App() {
 
   return (
     <div className="dashboard-layout">
-      {/* 🧠 THEME 1: CONTROL SIDEBAR PANEL */}
       <aside className="sidebar">
         <div className="sidebar-header">
           <h2 className="title-memory-matrix">🧠 Memory Matrix</h2>
@@ -190,7 +224,7 @@ export default function App() {
               </span>
             </div>
             <div className="insight-card">
-              <span className="label">Total Play Time Indexed</span>
+              <span className="label">Total Play Time Mapped</span>
               <span className="value">{summaryMetrics.totalMinutes} mins</span>
             </div>
           </div>
@@ -219,10 +253,10 @@ export default function App() {
                 <h5>🛒 Transactions</h5>
                 {filteredData.transactions.map((t, i) => (
                   <p key={i} className="inspector-item status-expense">
-                    • {t.Category}: ₹{t.Amount}
+                    • {t.Category}: ₹{cleanNumericValue(t.Amount)}
                   </p>
                 ))}
-                <h5>🎵 Spotify History Logs</h5>
+                <h5>🎵 Spotify Tracks</h5>
                 {filteredData.spotifyHistory.slice(0, 4).map((s, i) => (
                   <p key={i} className="inspector-item status-audio">
                     • {s.track_name} ({s.artist_name})
@@ -238,7 +272,6 @@ export default function App() {
         </div>
       </aside>
 
-      {/* 🕸️ THEME 2: INTERACTIVE SKY CANVAS GRID PLATFORM */}
       <main className="main-content">
         <header className="main-content-header">
           <h1 className="title-behavioral-map">
@@ -252,18 +285,8 @@ export default function App() {
 
         <section className="canvas-wrapper">
           <MemoryGraph
-            transactions={transactions.map((t) => ({
-              ...t,
-              date: standardizeDate(t.Date),
-              amount: t.Amount,
-              category: t.Category,
-            }))}
-            spotifyHistory={spotifyHistory.map((s) => ({
-              ...s,
-              endTime: standardizeDate(s.ts),
-              trackName: s.track_name,
-              artistName: s.artist_name,
-            }))}
+            transactions={mappedTransactions}
+            spotifyHistory={mappedSpotifyHistory}
             spotifyDict={spotifyDictMap}
           />
         </section>

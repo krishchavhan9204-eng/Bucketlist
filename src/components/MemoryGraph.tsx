@@ -34,6 +34,7 @@ export default function MemoryGraph({
       { txs: HouseholdTransaction[]; tracks: SpotifyHistoryItem[] }
     > = {};
 
+    // 1. Cluster Transactions safely by standardized date key string
     transactions.forEach((tx) => {
       if (!tx.Date) return;
       const cleanDate = tx.Date.toString().trim();
@@ -42,6 +43,7 @@ export default function MemoryGraph({
       dailyGroups[cleanDate].txs.push(tx);
     });
 
+    // 2. Cluster Spotify logs safely by standardized date key string
     spotifyHistory.forEach((track) => {
       if (!track.endTime) return;
       const cleanDate = track.endTime.toString().trim();
@@ -52,12 +54,16 @@ export default function MemoryGraph({
 
     const uniqueDays = Object.keys(dailyGroups).sort();
 
+    // Dynamic Mobile Layout Spacing Checker
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    const horizontalGap = isMobile ? 320 : 520;
+
     uniqueDays.forEach((date, dayIndex) => {
       const dayData = dailyGroups[date];
-      const centerX = dayIndex * 520;
-      const centerY = 240;
+      const centerX = dayIndex * horizontalGap;
+      const centerY = 220;
 
-      // 📅 CENTRAL TIMELINE NODE (Fluffy White Base Clouds)
+      // 📅 BASE TIMELINE CALENDAR NODE (Fluffy White Base Clouds)
       newNodes.push({
         id: `date-${date}`,
         data: { label: `☁️\n${date}` },
@@ -73,29 +79,29 @@ export default function MemoryGraph({
           alignItems: "center",
           justifyContent: "center",
           fontWeight: "bold",
-          fontSize: "12px",
+          fontSize: "11px",
           textAlign: "center",
           boxShadow: "0 10px 15px -3px rgba(0,0,0,0.05)",
         },
       });
 
-      // 🛒 TRANSACTION NODES (Soft Pink Rain Clouds)
+      // 🛒 HOUSEHOLD BUDGET NODES (Soft Pink Clouds)
       dayData.txs.forEach((tx, txIndex) => {
         const txNodeId = `tx-${date}-${txIndex}`;
         newNodes.push({
           id: txNodeId,
-          data: { label: `🛍️ ${tx.Category}\n₹${tx.Amount}` },
-          position: { x: centerX - 60 + txIndex * 150, y: centerY - 140 },
+          data: { label: `🛍️ ${tx.Category || "Other"}\n₹${tx.Amount || 0}` },
+          position: { x: centerX - 50 + txIndex * 130, y: centerY - 130 },
           style: {
             background: "#FEF2F2",
             color: "#991B1B",
             border: "2px solid #FCA5A5",
             borderRadius: "24px",
-            padding: "12px",
-            fontSize: "12px",
+            padding: "10px",
+            fontSize: "11px",
             textAlign: "center",
             whiteSpace: "pre-wrap",
-            width: 130,
+            width: 115,
             boxShadow: "0 4px 6px rgba(239, 68, 68, 0.05)",
           },
         });
@@ -104,32 +110,44 @@ export default function MemoryGraph({
           id: `edge-${txNodeId}`,
           source: txNodeId,
           target: `date-${date}`,
-          style: { stroke: "#FCA5A5", strokeWidth: 2, strokeDasharray: "4 4" },
+          style: {
+            stroke: "#FCA5A5",
+            strokeWidth: 1.5,
+            strokeDasharray: "4 4",
+          },
         });
       });
 
-      // 🎧 SPOTIFY NODES (Mint Green Breeze Clouds)
+      // 🎧 SPOTIFY AUDIO HISTORY NODES (Mint Green Breeze Clouds)
       dayData.tracks.slice(0, 2).forEach((track, trackIndex) => {
         const trackNodeId = `track-${date}-${trackIndex}`;
-        const features = spotifyDict[track.trackName?.toString().trim()];
+
+        // 🛡️ Fail-safe structural safety string check
+        const rawTrackName = String(track.trackName || "Unknown Song");
+        const displayTrackName =
+          rawTrackName.length > 18
+            ? rawTrackName.substring(0, 18) + "..."
+            : rawTrackName;
+
+        const features = spotifyDict[rawTrackName.trim()];
         const energyLabel = features
-          ? `⚡ Energy: ${features.energy}`
+          ? `⚡ E: ${features.energy}`
           : "🎵 Track Loaded";
 
         newNodes.push({
           id: trackNodeId,
-          data: { label: `🎵 ${track.trackName}\n${energyLabel}` },
-          position: { x: centerX - 60 + trackIndex * 160, y: centerY + 140 },
+          data: { label: `🎵 ${displayTrackName}\n${energyLabel}` },
+          position: { x: centerX - 50 + trackIndex * 130, y: centerY + 130 },
           style: {
             background: "#F0FDF4",
             color: "#166534",
             border: "2px solid #86EFAC",
             borderRadius: "24px",
-            padding: "12px",
-            fontSize: "11px",
+            padding: "10px",
+            fontSize: "10px",
             textAlign: "center",
             whiteSpace: "pre-wrap",
-            width: 140,
+            width: 120,
             boxShadow: "0 4px 6px rgba(34, 197, 94, 0.05)",
           },
         });
@@ -139,7 +157,7 @@ export default function MemoryGraph({
           source: `date-${date}`,
           target: trackNodeId,
           animated: true,
-          style: { stroke: "#86EFAC", strokeWidth: 2 },
+          style: { stroke: "#86EFAC", strokeWidth: 1.5 },
         });
       });
     });
@@ -148,9 +166,17 @@ export default function MemoryGraph({
   }, [transactions, spotifyHistory, spotifyDict]);
 
   return (
-    <div style={{ width: "100%", height: "520px", position: "relative" }}>
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        minHeight: "400px",
+        position: "relative",
+      }}
+    >
       <ReactFlow nodes={nodes} edges={edges} fitView>
         <Controls
+          showInteractive={false}
           style={{
             background: "#FFFFFF",
             border: "1px solid #BAE6FD",

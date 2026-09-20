@@ -1,6 +1,27 @@
 /* ==========================================================================
-   🧠 THEME 1: CONTROL SIDEBAR (Dark Sapphire Blues)
+   🌐 BASE CONFIG & SYSTEM LAYOUT
    ========================================================================== */
+:root {
+  --bg-main: #f0f9ff;
+  --bg-card: #ffffff;
+  --accent-neon: #0284c7;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --border-color: #e2e8f0;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* DESKTOP ASYMMETRIC GRID LAYER */
 .dashboard-layout {
   display: grid;
   grid-template-columns: 340px 1fr;
@@ -9,13 +30,16 @@
   overflow: hidden;
 }
 
+/* ==========================================================================
+   🧠 THEME 1: CONTROL SIDEBAR (Dark Sapphire Blue Base)
+   ========================================================================== */
 .sidebar {
   background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
   border-right: 2px solid #1e3a8a;
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   color: #f8fafc;
   overflow-y: auto;
 }
@@ -35,34 +59,33 @@
   padding: 4px 8px;
   border-radius: 4px;
   display: inline-block;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .insights-panel h3,
 .story-inspector h3 {
-  font-size: 13px;
+  font-size: 12px;
   color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 12px;
+  margin: 0 0 10px 0;
 }
 
 .sidebar .insight-card {
-  background-color: rgba(30, 41, 59, 0.7);
+  background-color: rgba(30, 41, 59, 0.6);
   border: 1px solid #334155;
   padding: 12px;
   border-radius: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   display: flex;
   flex-direction: column;
 }
-
 .sidebar .insight-card .label {
-  font-size: 12px;
+  font-size: 11px;
   color: #94a3b8;
 }
 .sidebar .insight-card .value {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #ffffff;
 }
@@ -78,12 +101,13 @@
   color: #0f172a;
 }
 .inspector-card h4 {
-  margin: 0;
+  margin: 0 0 6px 0;
   color: #0284c7;
+  font-size: 16px;
 }
 .inspector-card h5 {
   margin: 10px 0 4px 0;
-  font-size: 12px;
+  font-size: 11px;
   color: #475569;
   text-transform: uppercase;
 }
@@ -98,14 +122,14 @@
   color: #047857;
 }
 .empty-inspector-text {
-  font-size: 13px;
+  font-size: 12px;
   color: #64748b;
   font-style: italic;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 /* ==========================================================================
-   🕸️ THEME 2: BEHAVIORAL MAIN CONTENT STAGE (Light Sky Blues)
+   🕸️ THEME 2: BEHAVIORAL STAGE (Open Light Sky Platform)
    ========================================================================== */
 .main-content {
   background-color: #f0f9ff;
@@ -120,15 +144,15 @@
   background: linear-gradient(135deg, #0369a1 0%, #0284c7 50%, #0d9488 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 800;
   margin: 0;
 }
-
-.main-content .subtitle {
+.subtitle {
   color: #475569;
   font-size: 14px;
   margin: 4px 0 0 0;
+  line-height: 1.4;
 }
 
 .canvas-wrapper {
@@ -137,8 +161,8 @@
   border-radius: 16px;
   overflow: hidden;
   border: 2px solid #93c5fd;
+  min-height: 380px;
 }
-
 .canvas-wrapper::before {
   content: "";
   position: absolute;
@@ -150,7 +174,6 @@
   opacity: 0.6;
   animation: driftClouds 50s linear infinite;
   pointer-events: none;
-  z-index: 0;
 }
 @keyframes driftClouds {
   from {
@@ -161,7 +184,7 @@
   }
 }
 
-/* CHRONOLOGICAL LEDGER LIST */
+/* CHRONOLOGICAL DATA TABLE LEDGER */
 .timeline-table-section h3 {
   margin: 0 0 12px 0;
   font-size: 16px;
@@ -171,7 +194,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 220px;
+  max-height: 260px;
   overflow-y: auto;
 }
 .timeline-row {
@@ -180,7 +203,7 @@
   align-items: center;
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
-  padding: 12px 20px;
+  padding: 12px 16px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -193,7 +216,7 @@
 .row-date-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 .bullet-indicator {
   width: 8px;
@@ -217,9 +240,8 @@
 .loading-fallback {
   color: #0284c7;
   font-weight: 600;
-  padding: 50px;
+  padding: 40px;
   text-align: center;
-  font-size: 18px;
 }
 .clear-btn {
   background: #f1f5f9;
@@ -229,6 +251,64 @@
   border-radius: 4px;
   cursor: pointer;
 }
-.clear-btn:hover {
-  background: #e2e8f0;
+
+/* ==========================================================================
+   📱 📲 THEME RESPONSIVE MEDIA QUERIES BREAK ENGINE (Mobile Opt-In)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .dashboard-layout {
+    display: flex;
+    flex-direction: column; /* Stack layout vertically instead of locking side-by-side */
+    height: auto;
+    overflow-y: auto;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 3px solid #1e3a8a;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow-y: visible; /* Prevent nested scrolling conflicts on phones */
+    gap: 16px;
+  }
+
+  /* Arrange statistical info grid style on phones to save text column space */
+  .insights-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .sidebar .insight-card {
+    margin-bottom: 0;
+  }
+
+  .main-content {
+    padding: 16px;
+    box-sizing: border-box;
+    gap: 20px;
+  }
+
+  .title-behavioral-map {
+    font-size: 20px;
+  }
+
+  .canvas-wrapper {
+    height: 420px; /* Locked standard height frame for easy drag interaction */
+    min-height: 420px;
+  }
+
+  /* Make row streams wrap elegantly on narrow phone panels */
+  .timeline-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 12px;
+  }
+
+  .row-metric {
+    display: inline-block;
+    margin-left: 16px;
+    font-size: 12px;
+  }
 }
