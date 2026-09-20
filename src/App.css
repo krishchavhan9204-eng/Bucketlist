@@ -139,7 +139,6 @@
   border: 2px solid #93c5fd;
 }
 
-/* Background overlay clouds infinite horizontal scrolling animation loop */
 .canvas-wrapper::before {
   content: "";
   position: absolute;
@@ -162,7 +161,7 @@
   }
 }
 
-/* CHRONOLOGICAL LIST INTERFACE */
+/* CHRONOLOGICAL LEDGER LIST */
 .timeline-table-section h3 {
   margin: 0 0 12px 0;
   font-size: 16px;

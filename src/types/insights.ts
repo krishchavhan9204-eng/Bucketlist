@@ -1,31 +1,23 @@
 export interface HouseholdTransaction {
-  date: string; // YYYY-MM-DD
-  amount: number;
-  category:
-    | "Groceries"
-    | "Utilities"
-    | "Rent"
-    | "Entertainment"
-    | "Maintenance";
+  Date: string; // "20/09/2018 12:04:08"
+  Category: string; // "Transportation"
+  Amount: number; // 30
 }
 
 export interface SpotifyHistoryItem {
-  endTime: string; // YYYY-MM-DD HH:MM
-  artistName: string;
+  ts: string; // "2013-07-08 02:44:34"
+  track_name: string; // "Say It, Just Say It"
+  artist_name: string; // "The Mowgli's"
+  ms_played: number; // 3185
+}
+
+export interface SpotifyDictionaryRow {
   trackName: string;
-  msPlayed: number;
+  energy: number;
+  tempo: number;
+  valence: number;
 }
 
-export interface AudioFeatures {
-  tempo: number; // BPM
-  energy: number; // 0 to 1
-  valence: number; // 0 to 1 (Happiness/Positivity)
-}
-
-// Data dictionary maps Track Name or Artist Name to audio metrics
-export type SpotifyDictionary = Record<string, AudioFeatures>;
-
-// Combined daily snapshot for insights
 export interface DailyLifeSnapshot {
   date: string;
   totalSpent: number;

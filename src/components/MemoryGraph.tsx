@@ -2,16 +2,23 @@ import { useMemo } from "react";
 import { ReactFlow, Controls } from "@xyflow/react";
 import type { Node, Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import type {
-  HouseholdTransaction,
-  SpotifyHistoryItem,
-  SpotifyDictionary,
-} from "../types/insights";
+
+interface HouseholdTransaction {
+  Date: string;
+  Amount: number;
+  Category: string;
+}
+
+interface SpotifyHistoryItem {
+  endTime: string;
+  trackName: string;
+  artistName: string;
+}
 
 interface MemoryGraphProps {
   transactions: HouseholdTransaction[];
   spotifyHistory: SpotifyHistoryItem[];
-  spotifyDict: SpotifyDictionary;
+  spotifyDict: Record<string, any>;
 }
 
 export default function MemoryGraph({
@@ -28,24 +35,29 @@ export default function MemoryGraph({
     > = {};
 
     transactions.forEach((tx) => {
-      if (!tx.date) return;
-      if (!dailyGroups[tx.date]) dailyGroups[tx.date] = { txs: [], tracks: [] };
-      dailyGroups[tx.date].txs.push(tx);
+      if (!tx.Date) return;
+      const cleanDate = tx.Date.toString().trim();
+      if (!dailyGroups[cleanDate])
+        dailyGroups[cleanDate] = { txs: [], tracks: [] };
+      dailyGroups[cleanDate].txs.push(tx);
     });
 
     spotifyHistory.forEach((track) => {
       if (!track.endTime) return;
-      const dateKey = track.endTime.split(" ")[0];
-      if (!dailyGroups[dateKey]) dailyGroups[dateKey] = { txs: [], tracks: [] };
-      dailyGroups[dateKey].tracks.push(track);
+      const cleanDate = track.endTime.toString().trim();
+      if (!dailyGroups[cleanDate])
+        dailyGroups[cleanDate] = { txs: [], tracks: [] };
+      dailyGroups[cleanDate].tracks.push(track);
     });
 
-    Object.keys(dailyGroups).forEach((date, dayIndex) => {
+    const uniqueDays = Object.keys(dailyGroups).sort();
+
+    uniqueDays.forEach((date, dayIndex) => {
       const dayData = dailyGroups[date];
       const centerX = dayIndex * 520;
       const centerY = 240;
 
-      // 📅 BASE TIMELINE TIMEFRAME (Fluffy White Base Clouds)
+      // 📅 CENTRAL TIMELINE NODE (Fluffy White Base Clouds)
       newNodes.push({
         id: `date-${date}`,
         data: { label: `☁️\n${date}` },
@@ -67,12 +79,12 @@ export default function MemoryGraph({
         },
       });
 
-      // 🛒 TRANSACTION LAYER (Soft Pink Budget Clouds)
+      // 🛒 TRANSACTION NODES (Soft Pink Rain Clouds)
       dayData.txs.forEach((tx, txIndex) => {
         const txNodeId = `tx-${date}-${txIndex}`;
         newNodes.push({
           id: txNodeId,
-          data: { label: `🛍️ ${tx.category}\n₹${tx.amount}` },
+          data: { label: `🛍️ ${tx.Category}\n₹${tx.Amount}` },
           position: { x: centerX - 60 + txIndex * 150, y: centerY - 140 },
           style: {
             background: "#FEF2F2",
@@ -96,18 +108,17 @@ export default function MemoryGraph({
         });
       });
 
-      // 🎧 AUDIO HISTORY LAYER (Mint Green Audio Feature Clouds)
+      // 🎧 SPOTIFY NODES (Mint Green Breeze Clouds)
       dayData.tracks.slice(0, 2).forEach((track, trackIndex) => {
         const trackNodeId = `track-${date}-${trackIndex}`;
-        const features =
-          spotifyDict[track.trackName] || spotifyDict[track.artistName];
-        const energyValue = features
+        const features = spotifyDict[track.trackName?.toString().trim()];
+        const energyLabel = features
           ? `⚡ Energy: ${features.energy}`
           : "🎵 Track Loaded";
 
         newNodes.push({
           id: trackNodeId,
-          data: { label: `🎵 ${track.trackName}\n${energyValue}` },
+          data: { label: `🎵 ${track.trackName}\n${energyLabel}` },
           position: { x: centerX - 60 + trackIndex * 160, y: centerY + 140 },
           style: {
             background: "#F0FDF4",
@@ -127,7 +138,7 @@ export default function MemoryGraph({
           id: `edge-${trackNodeId}`,
           source: `date-${date}`,
           target: trackNodeId,
-          animated: true, // Animates listening linkages like air wind currents
+          animated: true,
           style: { stroke: "#86EFAC", strokeWidth: 2 },
         });
       });
@@ -137,7 +148,7 @@ export default function MemoryGraph({
   }, [transactions, spotifyHistory, spotifyDict]);
 
   return (
-    <div style={{ width: "100%", height: "520px" }}>
+    <div style={{ width: "100%", height: "520px", position: "relative" }}>
       <ReactFlow nodes={nodes} edges={edges} fitView>
         <Controls
           style={{
